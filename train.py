@@ -94,7 +94,6 @@ if __name__ == "__main__":
     test_loss = []
 
     for epoch in range(start_epoch,  epoch+1):
-        # alpha = kl_annealer(epoch)
         loss, recon_loss, KLD, MSE = train(model, 
                                               train_dataloader, 
                                               optimizer, 

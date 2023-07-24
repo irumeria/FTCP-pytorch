@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 from torch.utils.data import DataLoader
 import torch
 from torch import optim
@@ -93,6 +94,7 @@ if __name__ == "__main__":
     epoch = params['epochs']
     train_loss = []
     test_loss = []
+    os.makedirs('checkpoints', exist_ok=True)
 
     for epoch in range(start_epoch,  epoch+1):
         loss, recon_loss, KLD, MSE = train(model, 

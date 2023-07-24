@@ -1,2 +1,4 @@
 /checkpoints/*
 designed_CIFs
+__pycache__
+/ftcp_pytorch/__pycache__

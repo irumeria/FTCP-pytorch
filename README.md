@@ -2,7 +2,7 @@
 
 This is a simple Pytorch implementation of the paper [An invertible crystallographic representation for general inverse design of inorganic crystals with targeted properties](https://www.cell.com/matter/pdf/S2590-2385(21)00625-1.pdf). The representation-building code is reserved, and the model is rewrited in Pytorch.
 
-### prerequisites
+### Prerequisites
 ```bash
 pip install -r requirements.txt
 ```
@@ -41,7 +41,7 @@ The parameters of infer.py will be loaded from the checkpoint.
 ### Dataset
 The example dataset in `data/example.csv` of is from the [Material Project](https://next-gen.materialsproject.org/)
 
-### Other Implementations
+### Other Implements
 
-+ Original (by tensorlfow 1.15): https://github.com/PV-Lab/FTCP
++ Original (in tensorlfow 1.15): https://github.com/PV-Lab/FTCP
 

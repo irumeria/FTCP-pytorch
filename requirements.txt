@@ -1,0 +1,7 @@
+torch
+pandas
+joblib
+ase
+pymatgen
+scikit-learn
+tqdm

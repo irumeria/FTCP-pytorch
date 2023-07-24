@@ -9,6 +9,7 @@ from ftcp_pytorch.vae import VAE, train, test
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+datafile = 'data/example.csv'
 params = {  'num_conv_layers' : 3,
             'embedding_dim' : 128,
             'kernel1_size' : 5,
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.enable = True
     model_path = None
 
-    dataframe = pd.read_csv('data/example.csv')
+    dataframe = pd.read_csv(datafile)
 
     dataSet = FTCPDataSet(dataframe, max_elms=params['max_elms'], max_sites=params['max_sites'],predict_property=True, property_name='band_gap')
 

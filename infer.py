@@ -5,7 +5,7 @@ import torch
 import joblib
 
 from ftcp_pytorch.ftcp import FTCPDataSet, get_info
-from ftcp_pytorch.vae import VAE, train, test
+from ftcp_pytorch.vae import VAE
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

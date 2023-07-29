@@ -1,6 +1,6 @@
 ## Pytorch Implement of Fourier-Transformed Crystal Properties (FTCP)
 
-This is a simple Pytorch implementation of the paper [An invertible crystallographic representation for general inverse design of inorganic crystals with targeted properties](https://www.cell.com/matter/pdf/S2590-2385(21)00625-1.pdf). The representation-building code is reserved, and the model is rewrited in Pytorch.
+This is a simple Pytorch implementation of the paper [An invertible crystallographic representation for general inverse design of inorganic crystals with targeted properties](https://www.cell.com/matter/pdf/S2590-2385(21)00625-1.pdf). The representation-building code is reserved, and the model is rewritten in Pytorch.
 
 ### Prerequisites
 ```bash

@@ -3,6 +3,7 @@
 
 import joblib, json
 import numpy as np
+import pickle
 from functools import partial
 from tqdm import tqdm
 import joblib, os
@@ -16,10 +17,13 @@ from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 tqdm = partial(tqdm, position=0, leave=True)
 
 class FTCPDataSet(Dataset):
-    def __init__(self, dataframe, pad_width=2, max_elms=102, max_sites=40, predict_property=False, property_name=None):
+    def __init__(self, dataframe, pad_width=2, max_elms=5, max_sites=40, predict_property=False, property_name=None, load_scaler=False):
         FTCP_representation, self.Nsites = FTCP_represent(dataframe, max_elms=max_elms, max_sites=max_sites, return_Nsites=True)
         FTCP_representation = np.pad(FTCP_representation, ((0, 0), (0, pad_width), (0, 0)), constant_values=0)
-        self.data, self.scaler = minmax(FTCP_representation)
+        if load_scaler:
+            self.data, self.scaler = minmax(FTCP_representation, save_path=None, load_path="checkpoints/minmax_scaler.pkl")
+        else:
+            self.data, self.scaler = minmax(FTCP_representation, save_path="checkpoints/minmax_scaler.pkl", load_path=None)
 
         self.predict_property = predict_property
 
@@ -41,7 +45,7 @@ class FTCPDataSet(Dataset):
             prop = 0.
         return self.data[idx], prop
 
-def minmax(FTCP):
+def minmax(FTCP, save_path=None, load_path=None):
     '''
     This function performs data normalization for FTCP representation along the second dimension
 
@@ -61,14 +65,53 @@ def minmax(FTCP):
     
     dim0, dim1, dim2 = FTCP.shape
     scaler = MinMaxScaler()
+
     FTCP_ = np.transpose(FTCP, (1, 0, 2))
     FTCP_ = FTCP_.reshape(dim1, dim0*dim2)
-    FTCP_ = scaler.fit_transform(FTCP_.T)
+    if load_path is not None:
+        with open(load_path, 'rb') as f:
+            scaler = pickle.load(f)
+        FTCP_ = scaler.transform(FTCP_.T)
+    else:
+        FTCP_ = scaler.fit_transform(FTCP_.T)
     FTCP_ = FTCP_.T
     FTCP_ = FTCP_.reshape(dim1, dim0, dim2)
     FTCP_normed = np.transpose(FTCP_, (1, 0, 2))
+
+    if save_path is not None:
+        with open(save_path, 'wb') as f:
+            pickle.dump(scaler, f)
     
     return FTCP_normed, scaler
+
+def inv_minmax(FTCP_normed, scaler):
+    '''
+    This function is the inverse of minmax, 
+    which denormalize the FTCP representation along the second dimension
+
+    Parameters
+    ----------
+    FTCP_normed : numpy ndarray
+        Normalized FTCP representation.
+    scaler : sklearn MinMaxScaler object
+        MinMaxScaler used for the normalization.
+
+    Returns
+    -------
+    FTCP : numpy ndarray
+        Denormalized FTCP representation as numpy ndarray.
+
+    '''
+    dim0, dim1, dim2 = FTCP_normed.shape
+
+    FTCP_ = np.transpose(FTCP_normed, (1, 0, 2))
+    FTCP_ = FTCP_.reshape(dim1, dim0*dim2)
+    FTCP_ = scaler.inverse_transform(FTCP_.T)
+    FTCP_ = FTCP_.T
+    FTCP_ = FTCP_.reshape(dim1, dim0, dim2)
+    FTCP = np.transpose(FTCP_, (1, 0, 2))
+    
+    return FTCP
 
 
 def FTCP_represent(dataframe, max_elms=3, max_sites=20, return_Nsites=False):
@@ -128,6 +171,11 @@ def FTCP_represent(dataframe, max_elms=3, max_sites=20, return_Nsites=False):
         # Sort elm to the order of sites in the CIF
         site_elm = np.array(crystal.atomic_numbers)
         elm = site_elm[np.sort(elm_idx)]
+
+        # Skip if number of elements or sites exceed the maximum
+        if max_elms < len(elm) or max_sites < len(crystal.atomic_numbers):
+            continue
+    
         # Zero pad element matrix to have at least 3 columns
         ELM = np.zeros((len(elm_onehot), max(max_elms, 3),))
         ELM[:, :len(elm)] = elm_onehot[elm-1,:].T
@@ -216,7 +264,7 @@ def get_info(ftcp_designs,
              elm_str=joblib.load('data/element.pkl'),
              to_CIF=True,
              check_uniqueness=True,
-             mp_api_key=None,
+             save_root="designed_CIFs/",
              ):
     
     '''
@@ -315,7 +363,7 @@ def get_info(ftcp_designs,
     ind = list(np.arange(len(pred_formula)))
     
     if to_CIF:
-        os.makedirs('designed_CIFs', exist_ok=True)
+        os.makedirs(save_root, exist_ok=True)
         
         op = tqdm(ind)
         for i, j in enumerate(op):
@@ -325,7 +373,7 @@ def get_info(ftcp_designs,
                 crystal = spacegroup.crystal(pred_formula[j],
                                              basis=pred_site_coor[j],
                                              cellpar=pred_latt[j])
-                write('designed_CIFs/'+str(i)+'.cif', crystal)
+                write(os.path.join(save_root,str(i)+'.cif'), crystal)
             except:
                 pass
     

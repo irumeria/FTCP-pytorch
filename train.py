@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     print(dataSet.data.shape)
 
-    train_set_size = int(len(dataSet) * 0.8)
+    train_set_size = int(len(dataSet) * 0.9)
     valid_set_size = len(dataSet) - train_set_size
     
     train_set = torch.utils.data.Subset(dataSet, range(train_set_size))
@@ -76,7 +76,9 @@ if __name__ == "__main__":
             except KeyError:
                 current_state[k] = None
         print("checkpoint in ", current_state['epoch'])
+        _epoch = params['epochs']
         params = current_state['params']
+        params['epochs'] = _epoch
         model = VAE(params).to(device)
         model.load_state_dict(current_state['model_state_dict'])
         start_epoch = current_state['epoch']
@@ -120,6 +122,6 @@ if __name__ == "__main__":
             current_state['best_loss'] = test_loss[-1]
             torch.save(current_state, './checkpoints/best.ckpt')
 
-        if epoch % 5 == 0:
+        if epoch % 20 == 0:
             torch.save(current_state, './checkpoints/'+str(epoch)+'.ckpt')
         

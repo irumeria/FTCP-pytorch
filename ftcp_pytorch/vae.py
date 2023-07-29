@@ -6,16 +6,16 @@ import numpy as np
 
 def vae_loss(x, x_out, mu, logvar, true_prop, pred_prop, weights, beta=1):
 
-    loss_recon = F.mse_loss(x_out, x)
+    loss_recon = torch.sum(torch.square(x_out - x))
     KLD = beta * -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
     if pred_prop is not None:
         MSE = F.mse_loss(pred_prop, true_prop)
     else:
-        MSE = torch.tensor(0.)
+        MSE = torch.zeros_like(loss_recon)
     if torch.isnan(KLD):
-        KLD = torch.tensor(0.)
+        KLD = torch.zeros_like(loss_recon)
         
-    return loss_recon + KLD + MSE, loss_recon, KLD, MSE
+    return torch.mean(loss_recon + KLD + MSE), loss_recon, KLD, MSE
 
 class PropertyPredictor(nn.Module):
     def __init__(self, d_latent, d_pp):

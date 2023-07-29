@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import torch
 import joblib
+import matplotlib.pyplot as plt
 
-from ftcp_pytorch.ftcp import FTCPDataSet, get_info
+from ftcp_pytorch.ftcp import FTCPDataSet, get_info, inv_minmax
 from ftcp_pytorch.vae import VAE
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -15,9 +16,8 @@ if __name__ == "__main__":
     torch.backends.cudnn.enable = True
     max_sites = 40
     
-    dataframe = pd.read_csv(datafile)
-
-    dataSet = FTCPDataSet(dataframe, max_elms=5, max_sites=40,predict_property=True, property_name='band_gap')
+    dataframe = pd.read_csv(datafile)[:10000]
+    dataSet = FTCPDataSet(dataframe, max_elms=5, max_sites=40, predict_property=False, property_name='band_gap', load_scaler=True)
 
     train_set_size = int(len(dataSet) * 0.8)
     valid_set_size = len(dataSet) - train_set_size
@@ -54,24 +54,34 @@ if __name__ == "__main__":
     print(model)
     print("start training in epoch ", start_epoch)
 
-
+    # reperduce
     ftcp_rebuild = []
     ftcp_predict = []
+    ftcp_org = []
 
-    for i in range(0, 100):
+    for i in range(0, 10):
         (data, prop) = valid_set[i]
+        ftcp_org.append(data)
         data = torch.tensor([data]).to(device)
         data = data.type(torch.cuda.FloatTensor)
         recon_data, z, mu, logvar, pred_prop = model(data)
         
         ftcp_rebuild.append(recon_data[0].cpu().detach().numpy())
+        
         # la sampling
-        z += 0.1 * torch.randn_like(z)
-        recon_data = model.decoder(z)
+        lz = z + 0.1 * torch.randn_like(z)
+        recon_data = model.decoder(lz)
         ftcp_predict.append(recon_data.cpu().detach().numpy())
-    ftcp_rebuild = np.array(ftcp_rebuild)
 
-    get_info(ftcp_rebuild, max_elms=params['max_elms'], max_sites=40,
-            elm_str=joblib.load('data/element.pkl')
+
+    ftcp_rebuild = inv_minmax(np.array(ftcp_rebuild[:100]), dataSet.scaler)
+    ftcp_org = inv_minmax(np.array(ftcp_org[:100]), dataSet.scaler)
+    
+    get_info(ftcp_org, max_elms=params['max_elms'], max_sites=params['max_sites'],
+            elm_str=joblib.load('data/element.pkl'), save_root="org_structures/"
             )
     
+    get_info(ftcp_rebuild, max_elms=params['max_elms'], max_sites=params['max_sites'],
+            elm_str=joblib.load('data/element.pkl')
+            )
+

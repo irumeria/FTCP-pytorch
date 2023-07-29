@@ -16,7 +16,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.enable = True
     max_sites = 40
     
-    dataframe = pd.read_csv(datafile)[:10000]
+    dataframe = pd.read_csv(datafile)
     dataSet = FTCPDataSet(dataframe, max_elms=5, max_sites=40, predict_property=False, property_name='band_gap', load_scaler=True)
 
     train_set_size = int(len(dataSet) * 0.8)
